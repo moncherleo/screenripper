@@ -67,3 +67,4 @@ desktop.ini
 =======
 
 src/com/
+/src/test/java/com/screenripper/tests/webdriver/Config.java

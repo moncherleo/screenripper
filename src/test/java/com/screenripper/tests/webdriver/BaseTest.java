@@ -5,22 +5,27 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.safari.SafariDriver;
 import ru.yandex.qatools.allure.annotations.Attachment;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class BaseTest {
-    protected WebDriver driver;
+    public WebDriver driver;
     private static String BROWSER = System.getProperty("browser");
+//    private static String BROWSER = "chrome";
     private static String REMOTE = System.getProperty("remote");
     private static String REMOTE_URL = "http://localhost:4444/wd/hub";
     private static String OS = System.getProperty("os.name").toLowerCase();
@@ -37,10 +42,10 @@ public class BaseTest {
             makeScreenshotOnFailure("Screenshot on failure");
         }
 
-        @Override
-        protected void finished(Description description) {
-            driver.quit();
-        }
+//        @Override
+//        protected void finished(Description description) {
+//            driver.quit();
+//        }
     };
 
     @Attachment(value = "{0}", type = "image/png")
@@ -53,17 +58,48 @@ public class BaseTest {
 
         //mvn clean test -Dbrowser="Chrome"
 
-        if (BROWSER == null || BROWSER.equalsIgnoreCase("Firefox") || BROWSER.equalsIgnoreCase("")) {
-            this.driver = new FirefoxDriver();
-            capabilities.setBrowserName("firefox");
-        } else if (BROWSER.equalsIgnoreCase("Chrome")) {
+        if (BROWSER == null || BROWSER.equalsIgnoreCase("Chrome") || BROWSER.equalsIgnoreCase("")) {
+
             if (isWindows()) {
                 System.setProperty("webdriver.chrome.driver", CHROME_PATH_WIN);
             } else if (isMac()) {
                 System.setProperty("webdriver.chrome.driver", CHROME_PATH_MAC);
             }
             capabilities.setBrowserName("chrome");
-            this.driver = new ChromeDriver();
+
+            ChromeOptions chromeOptions = new ChromeOptions();
+            Map<String, Object> prefs = new HashMap<String, Object>();
+            prefs.put("profile.default_content_setting_values.plugins", 1);
+            prefs.put("profile.content_settings.plugin_whitelist.adobe-flash-player", 1);
+            prefs.put("profile.content_settings.exceptions.plugins.*,*.per_resource.adobe-flash-player", 1);
+            // Enable Flash for this site
+            prefs.put("PluginsAllowedForUrls", "https://my.stratoplan.net/");
+            chromeOptions.setExperimentalOption("prefs", prefs);
+
+            this.driver = new ChromeDriver(chromeOptions);
+
+        } else if (BROWSER.equalsIgnoreCase("Safari")){
+            capabilities.setBrowserName("safari");
+            this.driver = new SafariDriver();
+
+        } else if (BROWSER.equalsIgnoreCase("Firefox")){
+
+            System.setProperty("webdriver.gecko.driver","src/test/resources/drivers/geckodriver");
+            capabilities = DesiredCapabilities.firefox();
+            capabilities.setBrowserName("firefox");
+            capabilities.setCapability("marionette", true);
+
+            FirefoxProfile ffProfile = new FirefoxProfile();
+            ffProfile.setPreference("dom.ipc.plugins.enabled.libflashplayer.so","true");
+            ffProfile.setPreference("plugin.state.flash", 2);
+            capabilities.setCapability(FirefoxDriver.PROFILE, ffProfile);
+
+            FirefoxOptions ffoptions = new FirefoxOptions();
+            ffoptions.addPreference("dom.ipc.plugins.enabled.libflashplayer.so","true");
+            ffoptions.addPreference("plugin.state.flash", 2);
+            capabilities.setCapability("moz:firefoxOptions", ffoptions);
+
+            this.driver = new FirefoxDriver(capabilities);
         }
 
         if (REMOTE != null && REMOTE.equalsIgnoreCase("true")) {
@@ -75,7 +111,7 @@ public class BaseTest {
             }
         }
 
-        driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
         driver.manage().window().maximize();
 
     }

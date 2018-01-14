@@ -1,92 +1,108 @@
 package com.screenripper.tests.webdriver;
 
-import com.automation.remarks.video.annotations.Video;
-import org.junit.Assert;
+import com.screenripper.pages.LoginPage;
+import com.screenripper.pages.MyAccountPage;
+import junitparams.FileParameters;
+import junitparams.JUnitParamsRunner;
+import junitparams.mappers.CsvWithHeaderMapper;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.junit.runner.RunWith;
+import ru.yandex.qatools.allure.annotations.Parameter;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.io.*;
 
+import static com.automation.remarks.video.SystemUtils.runCommand;
+import static com.screenripper.tests.webdriver.Config.*;
+
+@RunWith(JUnitParamsRunner.class)
 public class RipTheCurlTest extends BaseTest {
-    private String loginPageURL = "https://my.stratoplan.net/";
-    private String username = "qasmanagers@gmail.com";
-    private String password = "y7dwRQuM*j$P95%WM)X!8DMq";
-    private String pathToURLsFile = "";
-    private List<String> URLs = new ArrayList<>();
+
+    LoginPage loginPage = new LoginPage(driver);
+    MyAccountPage myAccountPage = new MyAccountPage(driver);
+
+    @Parameter("Course title")
+    String ct;
+
+    @Parameter("Course URL")
+    String cURL;
+
+    @Parameter("Lesson title")
+    String lt;
+
+    @Parameter("Lesson URL")
+    String lURL;
+
+    @Before
+    public void setUpLocal() {
+        loginPage = new LoginPage(driver);
+        myAccountPage = new MyAccountPage(driver);
+
+//        myAccountPage.startNewVideoRecording();
+//
+//        try {
+//            Thread.sleep(10000000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+
+        loginPage.navigateToLoginPage(loginPageURL).
+                closeAutomationChromeAlert().
+                loginAs(username, password);
+    }
+
+    @After
+    public void tearDownLocal() {
+        myAccountPage.logoutFromAccount();
+    }
 
     @Test
-    @Video
-    public void recordTheVideo() {
-        readAllURLs(pathToURLsFile);
-        navigateToLoginPage();
-        loginAs(username, password);
-        for (String lessonPageUrl : URLs) {
-            navigateToTheLessonPage(lessonPageUrl);
-            startVideoPlayback();
-            waitTillVideoFinish();
-            refreshThePage();
-            if (!areWeLoggedIn()) {
-                loginAs(username, password);
-            }
-        }
+    @FileParameters(value = csvFilename, mapper = CsvWithHeaderMapper.class)
+    public void recordTheVideoTest(String courseTitle, String courseURL, String lessonTitle, String lessonURL) {
+        // Архитектор карьеры|https://my.stratoplan.net/course/career-architect/|Часть №1|https://my.stratoplan.net/lesson/career-architect-s01/
+
+//        String courseTitle = "Архитектор карьеры";
+//        String courseURL = "https://my.stratoplan.net/course/career-architect/";
+//        String lessonTitle = "Часть №1";
+//        String lessonURL = "https://my.stratoplan.net/lesson/career-architect-s01/";
+
+        ct = courseTitle;
+        lt = lessonTitle;
+        cURL = courseURL;
+        lURL = lessonURL;
+
+        myAccountPage.navigateToThePageByURL(lessonURL);
+        myAccountPage.startMultipleVideosPlaybackAndRecordingThenStopAndSave(courseTitle, courseURL, lessonTitle, lessonURL);
+        addVideoAsProcessed(courseTitle
+                .concat("|")
+                .concat(courseURL)
+                .concat("|")
+                .concat(lessonTitle)
+                .concat("|")
+                .concat(lessonURL));
     }
 
-    private boolean areWeLoggedIn() {
-        return false;
-    }
+    public void addVideoAsProcessed (String processedVideoString) {
 
-    private void refreshThePage() {
-    }
+        BufferedWriter bw = null;
 
-    private void waitTillVideoFinish() {
-    }
-
-    private void startVideoPlayback() {
-        By videoPlayButton = By.cssSelector("div.fp-player");
-        By videoFullscreen = By.cssSelector("div.fp-player > div.fp-ui > a.fp-fullscreen");
-        driver.findElement(videoPlayButton).click();
-        driver.findElement(videoFullscreen).click();
-    }
-
-    private void readAllURLs(String pathToURLsFile) {
-        Scanner s = null;
         try {
-            s = new Scanner(new File(pathToURLsFile));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        while (s.hasNext()){
-            URLs.add(s.next());
-        }
-        s.close();
-    }
+            // APPEND MODE SET HERE
+            bw = new BufferedWriter(new FileWriter(processedVideosCVSFilename, true));
+            bw.write(processedVideoString);
+            bw.newLine();
+            bw.flush();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } finally {                       // always close the file
+            if (bw != null) try {
+                bw.close();
+            } catch (IOException ioe2) {
+                // just ignore it
+            }
+        } // end try/catch/finally
 
-    private void loginAs(String username, String password) {
-        By loginInput = By.cssSelector("#user_login");
-        By passwordInput = By.cssSelector("#user_pass");
-        By loginButton = By.cssSelector(".et_pb_newsletter_button.et_pb_button");
-        By exitMenuItem = By.xpath(".//li/a[contains(text(),'Выйти')]");
-        findElement(loginInput).sendKeys(username);
-        findElement(passwordInput).sendKeys(password);
-        findElement(loginButton).click();
-        Assert.assertTrue(driver.findElements(exitMenuItem).size() > 0);
-    }
+    } // end method()
 
-    private void navigateToTheLessonPage(String lessonPageUrl) {
-        driver.navigate().to(lessonPageUrl);
-    }
-
-    private void navigateToLoginPage() {
-        driver.get(loginPageURL);
-    }
-
-    private WebElement findElement(By by){
-        return driver.findElement(by);
-    }
 }
