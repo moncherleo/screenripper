@@ -5,21 +5,24 @@ public class Lesson {
     private String courseTitle = "";
     private String lessonURL = "";
     private String lessonTitle = "";
+    private int numberOfVideos;
 
     private static final String separator = "|";
 
-    public Lesson (String courseTitle,
-            String courseURL,
-            String lessonTitle ,
-            String lessonURL){
+    public Lesson(String courseTitle,
+                  String courseURL,
+                  String lessonTitle,
+                  String lessonURL,
+                  int numberOfVideos) {
 
         this.courseURL = courseURL;
         this.courseTitle = courseTitle;
         this.lessonURL = lessonURL;
         this.lessonTitle = lessonTitle;
+        this.numberOfVideos = numberOfVideos;
     }
 
-    public String getCourseTitleURLLessonTitleURLInOneString(){
+    public String getCourseTitleURLLessonTitleURLInOneString() {
         String s = "";
         return s.concat(courseTitle)
                 .concat(separator)
@@ -27,7 +30,9 @@ public class Lesson {
                 .concat(separator)
                 .concat(lessonTitle)
                 .concat(separator)
-                .concat(lessonURL);
+                .concat(lessonURL)
+                .concat(separator)
+                .concat(Integer.toString(numberOfVideos));
     }
 
     public String getCourseURL() {
@@ -60,5 +65,13 @@ public class Lesson {
 
     public void setLessonTitle(String lessonTitle) {
         this.lessonTitle = lessonTitle;
+    }
+
+    public int getNumberOfVideos() {
+        return numberOfVideos;
+    }
+
+    public void setNumberOfVideos(int numberOfVideos) {
+        this.numberOfVideos = numberOfVideos;
     }
 }

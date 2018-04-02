@@ -25,7 +25,7 @@ public class BasePage {
     public By topHeader = By.id("top-header");
     private By mainHeader = By.id("main-header");
 
-    protected String imagePath = "src/test/resources/images/";
+    public String imagePath = "src/test/resources/images/";
 
     public WebElement findElement(By by) {
         return driver.findElement(by);
@@ -38,33 +38,33 @@ public class BasePage {
 
         scrollToWebElement(element);
 
-        log.info("Making sure that webElement fits active viewport");
-
-        int viewportHeight = driver.manage().window().getSize().getHeight();
-        int topHeaderHeight = driver.findElement(topHeader).getSize().getHeight();
-        int mainHeaderHeight = driver.findElement(mainHeader).getSize().getHeight();
-
-        int scrollableViewportSize = viewportHeight - topHeaderHeight - mainHeaderHeight;
-        int scrollableViewportUpperBoundary = 1 + topHeaderHeight + mainHeaderHeight;
-        int scrollableViewportLowerBoundary = viewportHeight;
-
-        log.info("Scrollable Viewport Size is " + scrollableViewportSize);
-        log.info("Scrollable Upper Boundary is " + scrollableViewportUpperBoundary);
-        log.info("Scrollable Lower Boundary is " + scrollableViewportLowerBoundary);
-
-
-        int elementUpperBoundaryLocation = element.getLocation().getY();
-        log.info("Element Upper Boundary Location is " + elementUpperBoundaryLocation);
-
-        int elementMiddleLocation = element.getSize().getHeight() / 2 + elementUpperBoundaryLocation;
-        int elementLowerBoundaryLocation = elementUpperBoundaryLocation + element.getSize().getHeight();
-        log.info("Element Lower Boundary Location is " + elementLowerBoundaryLocation);
-
-        if (scrollableViewportUpperBoundary > elementUpperBoundaryLocation){
-            webpageScrollOn(scrollableViewportUpperBoundary - elementUpperBoundaryLocation + 1);
-        } else if (scrollableViewportLowerBoundary < elementLowerBoundaryLocation){
-            webpageScrollOn(scrollableViewportLowerBoundary - elementLowerBoundaryLocation - 1);
-        }
+//        log.info("Making sure that webElement fits active viewport");
+//
+//        int viewportHeight = driver.manage().window().getSize().getHeight();
+//        int topHeaderHeight = driver.findElement(topHeader).getSize().getHeight();
+//        int mainHeaderHeight = driver.findElement(mainHeader).getSize().getHeight();
+//
+//        int scrollableViewportSize = viewportHeight - topHeaderHeight - mainHeaderHeight;
+//        int scrollableViewportUpperBoundary = 1 + topHeaderHeight + mainHeaderHeight;
+//        int scrollableViewportLowerBoundary = viewportHeight;
+//
+//        log.info("Scrollable Viewport Size is " + scrollableViewportSize);
+//        log.info("Scrollable Upper Boundary is " + scrollableViewportUpperBoundary);
+//        log.info("Scrollable Lower Boundary is " + scrollableViewportLowerBoundary);
+//
+//
+//        int elementUpperBoundaryLocation = element.getLocation().getY();
+//        log.info("Element Upper Boundary Location is " + elementUpperBoundaryLocation);
+//
+//        int elementMiddleLocation = element.getSize().getHeight() / 2 + elementUpperBoundaryLocation;
+//        int elementLowerBoundaryLocation = elementUpperBoundaryLocation + element.getSize().getHeight();
+//        log.info("Element Lower Boundary Location is " + elementLowerBoundaryLocation);
+//
+//        if (scrollableViewportUpperBoundary > elementUpperBoundaryLocation){
+//            webpageScrollOn(scrollableViewportUpperBoundary - elementUpperBoundaryLocation + 1);
+//        } else if (scrollableViewportLowerBoundary < elementLowerBoundaryLocation){
+//            webpageScrollOn(scrollableViewportLowerBoundary - elementLowerBoundaryLocation - 1);
+//        }
     }
 
     private void webpageScrollOn(int targetY) {
@@ -75,7 +75,14 @@ public class BasePage {
 
     protected void scrollToWebElement(WebElement videoFrame) {
         log.info("Scrolling directly to webElement");
-        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", videoFrame);
+        //((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", videoFrame);
+
+        String scrollElementIntoMiddle = "var viewPortHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);"
+                + "var elementTop = arguments[0].getBoundingClientRect().top;"
+                + "window.scrollBy(0, elementTop-(viewPortHeight/2));";
+
+        ((JavascriptExecutor) driver).executeScript(scrollElementIntoMiddle, videoFrame);
+
     }
 
 }

@@ -19,6 +19,8 @@ import static com.screenripper.tests.webdriver.Config.*;
 @RunWith(JUnitParamsRunner.class)
 public class RipTheCurlTest extends BaseTest {
 
+    //mvn test -Dtest=RipTheCurlTest
+
     LoginPage loginPage = new LoginPage(driver);
     MyAccountPage myAccountPage = new MyAccountPage(driver);
 
@@ -35,7 +37,7 @@ public class RipTheCurlTest extends BaseTest {
     String lURL;
 
     @Before
-    public void setUpLocal() {
+    public void beforeTest() {
         loginPage = new LoginPage(driver);
         myAccountPage = new MyAccountPage(driver);
 
@@ -53,13 +55,12 @@ public class RipTheCurlTest extends BaseTest {
     }
 
     @After
-    public void tearDownLocal() {
-        myAccountPage.logoutFromAccount();
+    public void afterTest() {
     }
 
     @Test
     @FileParameters(value = csvFilename, mapper = CsvWithHeaderMapper.class)
-    public void recordTheVideoTest(String courseTitle, String courseURL, String lessonTitle, String lessonURL) {
+    public void recordTheVideoTest(String courseTitle, String courseURL, String lessonTitle, String lessonURL, String numberOfVideosOnPage) {
         // Архитектор карьеры|https://my.stratoplan.net/course/career-architect/|Часть №1|https://my.stratoplan.net/lesson/career-architect-s01/
 
 //        String courseTitle = "Архитектор карьеры";
@@ -73,7 +74,7 @@ public class RipTheCurlTest extends BaseTest {
         lURL = lessonURL;
 
         myAccountPage.navigateToThePageByURL(lessonURL);
-        myAccountPage.startMultipleVideosPlaybackAndRecordingThenStopAndSave(courseTitle, courseURL, lessonTitle, lessonURL);
+        myAccountPage.startMultipleVideosPlaybackAndRecordingThenStopAndSave(courseTitle, courseURL, lessonTitle, lessonURL, numberOfVideosOnPage);
         addVideoAsProcessed(courseTitle
                 .concat("|")
                 .concat(courseURL)

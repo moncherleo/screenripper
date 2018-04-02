@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 
 public class MyAccountPage extends BasePage {
@@ -37,7 +38,7 @@ public class MyAccountPage extends BasePage {
     By videoLengthTime = By.cssSelector(".fp-duration");
     By lectureTitle = By.cssSelector(".entry-title");
     By topicTitle = By.cssSelector(".entry-content .et_pb_tab_0 h3");
-    By videoFrameLocator = By.cssSelector(".fp-player");
+    public static By videoFrameLocator = By.cssSelector(".fp-player");
 
 
     public MyAccountPage(WebDriver driver) {
@@ -101,10 +102,12 @@ public class MyAccountPage extends BasePage {
             for (String lessonURL : lessonsURLsList) {
                 driver.navigate().to(lessonURL);
                 String lessonTitle = findElement(lectureTitle).getText();
+                int numberOfVideos = findElements(videoFrameLocator).size();
                 allTheLessons.add(new Lesson(courseTitleString,
                         courseDirectLink,
                         lessonTitle,
-                        lessonURL));
+                        lessonURL,
+                        numberOfVideos));
             }
 
         }
@@ -117,7 +120,7 @@ public class MyAccountPage extends BasePage {
         BufferedWriter writer;
         try {
             writer = new BufferedWriter(new FileWriter(csvFilename));
-            writer.write("CourseTitle|CourseURL|LessonTitle|LessonURL");
+            writer.write("CourseTitle|CourseURL|LessonTitle|LessonURL|NumberOfVideosOnPage");
 
             for (Lesson l : allTheLessons) {
                 writer.newLine();
@@ -183,26 +186,38 @@ public class MyAccountPage extends BasePage {
     public String startVideoPlayback(WebElement element) {
         String videoTime = "";
 
-        long delay = 5000L;
+        int delay = 10;
+        int minDelay = 1;
 
 
         try {
             Screen screen = new Screen();
-            screen.setAutoWaitTimeout(30);
+            screen.setAutoWaitTimeout(delay);
             ImagePath.add(imagePath);
             screen.click("phone_icon.png");
             log.info("Clicked on phone icon to have focus on browser window");
 
-            Screen screen2 = new Screen();
-            screen2.setAutoWaitTimeout(30);
-            ImagePath.add(imagePath);
             //Settings.MinSimilarity = 0.5;
-            screen2.wait("play_button.png");
-            screen2.click("play_button.png");
+
+            if (screen.exists("face1.png", minDelay) != null){
+                screen.click("face1.png");
+            } else if (screen.exists("face2.png", minDelay) != null){
+                screen.click("face2.png");
+            } else if (screen.exists("face3.png", minDelay) != null){
+                screen.click("face3.png");
+            } else if (screen.exists("face4.png", minDelay) != null){
+                screen.click("face4.png");
+            } else if (screen.exists("face5.png", minDelay) != null){
+                screen.click("face5.png");
+            } else if (screen.exists("face6.png", minDelay) != null){
+                screen.click("face6.png");
+            } else if (screen.exists("play_button.png", minDelay) != null){
+                screen.click("play_button.png");
+            }
             log.info("Clicked on video player play button");
 
             Screen screen3 = new Screen();
-            screen3.setAutoWaitTimeout(30);
+            screen3.setAutoWaitTimeout(delay);
             ImagePath.add(imagePath);
             screen3.wait("maximize_button.png");
             videoTime = getVideoTime(element);
@@ -302,7 +317,12 @@ public class MyAccountPage extends BasePage {
 
     private void exitFullScreenAndStopCamtasiaRecordingAndNameTheFileAs(String videoTitle) {
         exitFullScreen();
+        refreshBrowserPageToStopVideo();
         stopCamtasiaRecordingAndNameRecordingAs(videoTitle);
+    }
+
+    private void refreshBrowserPageToStopVideo() {
+        driver.navigate().refresh();
     }
 
     private void stopCamtasiaRecordingAndNameRecordingAs(String videoTitle) {
@@ -310,20 +330,27 @@ public class MyAccountPage extends BasePage {
         ImagePath.add(imagePath);
         screen.setAutoWaitTimeout(5);
 
-        driver.quit();
-        log.info("Quit browser... ");
+        log.info("Trying to save video with the filename: " + videoTitle);
 
         try {
+            log.info("Stopping the video recording");
             screen.wait("camtasia_task_panel_button_rec.png");
             screen.click("camtasia_task_panel_button_rec.png");
 
             screen.wait("camtasia_stop_recording.png");
             screen.click("camtasia_stop_recording.png");
 
+            log.info("Waiting for the save window displayed");
             screen.wait("camtasia_save_window_title.png");
+            log.info("Clicking on the save window title");
+            screen.click("camtasia_save_window_title.png");
 
             screen.wait("save_button.png");
-            screen.type(videoTitle);
+            log.info("Going to type " + videoTitle + "into the input field");
+            screen.paste(videoTitle);
+            screen.wait("save_button.png");
+
+            log.info("Clicking on the save button");
             screen.click("save_button.png");
 
         } catch (FindFailed findFailed) {
@@ -348,16 +375,34 @@ public class MyAccountPage extends BasePage {
     }
 
     private String generateVideoTitle(String courseTitle, String lessonTitle) {
-        String finalDestinationPath = recordingsFolder;
-        log.info("Identified destination video folder as :" + recordingsFolder);
+        //String finalDestinationPath = recordingsFolder;
+        //log.info("Identified destination video folder as :" + recordingsFolder);
 
-        return finalDestinationPath = finalDestinationPath
-                .concat(courseTitle)
+//        return finalDestinationPath = finalDestinationPath
+//                .concat(courseTitle)
+//                .concat("_")
+//                .concat(lessonTitle)
+//                .concat("_")
+//                .concat(new SimpleDateFormat("yyyyMMddHHmm").format(new Date()))
+//                .concat(".trec");
+
+
+        String s = "";
+        s = s.concat(courseTitle)
                 .concat("_")
                 .concat(lessonTitle)
-                .concat("_")
-                .concat(new SimpleDateFormat("yyyyMMddHHmm").format(new Date()))
-                .concat(".trec");
+                .concat("_");
+
+        if (s.length() > 130) {
+            s = s.substring(0, 130);
+        }
+
+        //s = s.concat(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+
+        log.info("Generated video title as " + s);
+
+        return s;
+
     }
 
     @Step("Get current lesson title")
@@ -368,7 +413,7 @@ public class MyAccountPage extends BasePage {
         return lessonTitle;
     }
 
-    public void startMultipleVideosPlaybackAndRecordingThenStopAndSave(String courseTitle, String courseURL, String lessonTitle, String lessonURL) {
+    public void startMultipleVideosPlaybackAndRecordingThenStopAndSave(String courseTitle, String courseURL, String lessonTitle, String lessonURL, String numberOfVideosOnPage) {
         long delay = 3000L;
 
         List<WebElement> videoFrames = findAllVideosRegions(videoFrameLocator);
@@ -377,27 +422,41 @@ public class MyAccountPage extends BasePage {
 
         String topicTitleString = "";
 
-        for (int i = 0; i < videoFrames.size(); i++) {
+        for (int i = 0; i < Integer.parseInt(numberOfVideosOnPage); i++) {
+
+
+            // HARD hardcode in the loop!!!!
+
+
+
             log.info("Processing video number " + i);
 
             makeWebElementVisibleInViewport(videoFrames.get(i));
 
-            WebElement element = findElements(topicTitle).get(i);
+            WebElement element;
+            if (findElements(topicTitle).size() > 0 ) {
+                element = findElements(topicTitle).get(i);
+            } else {
+                element = findElements(lectureTitle).get(i);
+            }
             topicTitleString = element.getText();
             topicTitleString = topicTitleString.replace(':', '_');
             log.info("Found next topic title " + topicTitleString);
 
             //startNewVideoRecording();
+
             startNewVideoRecordingCamtasia();
             String videoTime = startVideoPlayback(videoFrames.get(i));
             //stopVideoRecordingWhenVideoEnds();
 
-            //stopVideoRecordingAfterTime(parseStringTimeToLongInMilliseconds(videoTime) - delay);
 
-            String videoTitle = generateVideoTitle(courseTitle, lessonTitle + i + "-" + topicTitleString);
-            stopVideoRecordingAfterTime(30000L, videoTitle); //just a debug
+            String videoTitle = generateVideoTitle(courseTitle, lessonTitle + i + "_" + topicTitleString);
+            stopVideoRecordingAfterTime(parseStringTimeToLongInMilliseconds(videoTime) - delay, videoTitle);
+
+            //stopVideoRecordingAfterTime(30000L, videoTitle); //just a debug
 
             //renameVideoFileTo(videoTitle);
+
         }
     }
 
@@ -477,6 +536,7 @@ public class MyAccountPage extends BasePage {
             e.printStackTrace();
         }
         log.info("Send ESCAPE key to exit fullscreen");
+
     }
 
     public List<WebElement> findAllVideosRegions(By videoFrameLocator) {
