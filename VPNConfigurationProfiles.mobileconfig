@@ -4,7 +4,7 @@
 <dict>
   <key>PayloadContent</key>
   <array>
-    <!-- Home: Always -->
+    <!-- VPN: Always -->
     <dict>
       <key>UserDefinedName</key>
       <string>VPN: Always</string>
@@ -18,22 +18,22 @@
       <string>IPSec</string>
       <key>IPSec</key>
       <dict>
-        <key>RemoteAddress</key>
-        <string>80.211.213.36</string>
+        <!-- Configuration for AuthenticationMethod "SharedSecret" -->
         <key>AuthenticationMethod</key>
         <string>SharedSecret</string>
+        <key>RemoteAddress</key>
+        <string>80.211.213.36</string>
+        <key>SharedSecret</key>
+        <string>ygk8hxeMaxwZ7ytv</string>
+        <key>XAuthEnabled</key>
+        <integer>1</integer>
         <key>XAuthName</key>
         <string>vpnuser</string>
         <key>XAuthPassword</key>
         <string>3vAFxspz29me8Ref</string>
-        <key>XAuthEnabled</key>
-        <integer>1</integer>
-        <key>LocalIdentifier</key>
-        <string>vpnuser</string>
         <key>LocalIdentifierType</key>
         <string>KeyID</string>
-        <key>SharedSecret</key>
-        <data>eWdrOGh4ZU1heHdaN3l0dg==</data>
+
       </dict>
       <key>OnDemandEnabled</key>
       <integer>1</integer>
