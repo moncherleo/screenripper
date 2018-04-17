@@ -33,7 +33,7 @@
         <key>LocalIdentifierType</key>
         <string>KeyID</string>
         <key>SharedSecret</key>
-        <string>ygk8hxeMaxwZ7ytv</string>
+        <data>eWdrOGh4ZU1heHdaN3l0dg==</data>
       </dict>
       <key>OnDemandEnabled</key>
       <integer>1</integer>
