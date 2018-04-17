@@ -71,9 +71,12 @@ public class ConvertTheVideosTest {
     }
 
     private void exportVideoInCamtasiaToMP4(String strippedVideoFileName) {
+        long timeout = 240000L;
+        long lookupTimeout = 60000L;
+
         try {
             Screen screen = new Screen();
-            screen.setAutoWaitTimeout(60);
+            screen.setAutoWaitTimeout(timeout/1000);
             ImagePath.add(imagePath);
 
             screen.wait("camtasia_record_button_small.png");
@@ -86,7 +89,7 @@ public class ConvertTheVideosTest {
 
             do {
                 try {
-                    Thread.sleep(60000);
+                    Thread.sleep(lookupTimeout);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -102,7 +105,7 @@ public class ConvertTheVideosTest {
             screen.click("camtasia_do_not_save_button.png");
 
             try {
-                Thread.sleep(10000);
+                Thread.sleep(timeout);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
