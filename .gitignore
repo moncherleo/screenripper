@@ -69,4 +69,3 @@ desktop.ini
 src/com/
 /src/test/java/com/screenripper/tests/webdriver/Config.java
 /src/test/resources/csv/
-/VPNConfigurationProfiles.mobileconfig
