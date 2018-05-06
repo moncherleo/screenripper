@@ -4,7 +4,9 @@ import com.automation.remarks.video.exception.RecordingException;
 import com.screenripper.tests.webdriver.Lesson;
 import org.junit.Assert;
 import org.openqa.selenium.*;
+import org.openqa.selenium.interactions.Actions;
 import org.sikuli.script.*;
+import org.sikuli.script.Button;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.exec.ProcessExecutor;
 import ru.yandex.qatools.allure.annotations.Step;
@@ -15,16 +17,14 @@ import static com.screenripper.tests.webdriver.URLCrawlerTest.allMenuItemsLinks;
 import static org.sikuli.script.Constants.FOREVER;
 
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 
 public class MyAccountPage extends BasePage {
@@ -50,10 +50,20 @@ public class MyAccountPage extends BasePage {
     }
 
     @Step("Logging out from the account")
-    public LoginPage logoutFromAccount() {
-        findElement(exitMenuItem).click();
-        Assert.assertTrue(findElements(LoginPage.loginButton).size() > 0);
-        return new LoginPage(driver);
+    public void logoutFromAccount() {
+        List<WebElement> exitMenuItems;
+
+        if (driver != null) {
+
+            exitMenuItems = findElements(exitMenuItem);
+
+            if (exitMenuItems.size() > 0) {
+                exitMenuItems.get(0).click();
+            }
+
+            Assert.assertTrue(findElements(LoginPage.loginButton).size() > 0);
+
+        }
     }
 
     @Step("Navigate to the page by URL \"{0}\"")
@@ -160,9 +170,9 @@ public class MyAccountPage extends BasePage {
     }
 
     @Step("Get playback time of current video")
-    public String getVideoTime(WebElement element) {
+    public String getVideoTime(int videoIndex) {
 
-        String currentVideoTimeString = element.findElement(videoLengthTime).getText();
+        String currentVideoTimeString = findElements(videoLengthTime).get(videoIndex).getText();
         log.info("Found next video time: " + currentVideoTimeString);
 
         return currentVideoTimeString;
@@ -181,47 +191,61 @@ public class MyAccountPage extends BasePage {
         return this;
     }
 
-
-    @Step("Start video playback")
-    public String startVideoPlayback(WebElement element) {
-        String videoTime = "";
-
-        int delay = 10;
+    public void setFocusOnCourseWindow() {
+        int secondsDelay = 10;
         int minDelay = 1;
 
+        Screen screen = new Screen();
+        screen.setAutoWaitTimeout(secondsDelay);
+        ImagePath.add(imagePath);
+        try {
+            screen.click("phone_icon.png");
+        } catch (FindFailed findFailed) {
+            findFailed.printStackTrace();
+        }
+        log.info("Clicked on phone icon to have focus on browser window");
+    }
+
+    @Step("Start video playback")
+    public String startVideoPlayback(int videoIndex) {
+        String videoTime = "";
+
+        int secondsDelay = 10;
+        int minDelay = 1;
+
+        int mouseX = 0;
+        int mouseY = 25;
 
         try {
             Screen screen = new Screen();
-            screen.setAutoWaitTimeout(delay);
+            screen.setAutoWaitTimeout(secondsDelay);
             ImagePath.add(imagePath);
-            screen.click("phone_icon.png");
-            log.info("Clicked on phone icon to have focus on browser window");
 
             //Settings.MinSimilarity = 0.5;
 
-            if (screen.exists("face1.png", minDelay) != null){
+            if (screen.exists("face1.png", minDelay) != null) {
                 screen.click("face1.png");
-            } else if (screen.exists("face2.png", minDelay) != null){
+            } else if (screen.exists("face2.png", minDelay) != null) {
                 screen.click("face2.png");
-            } else if (screen.exists("face3.png", minDelay) != null){
+            } else if (screen.exists("face3.png", minDelay) != null) {
                 screen.click("face3.png");
-            } else if (screen.exists("face4.png", minDelay) != null){
+            } else if (screen.exists("face4.png", minDelay) != null) {
                 screen.click("face4.png");
-            } else if (screen.exists("face5.png", minDelay) != null){
+            } else if (screen.exists("face5.png", minDelay) != null) {
                 screen.click("face5.png");
-            } else if (screen.exists("face6.png", minDelay) != null){
+            } else if (screen.exists("face6.png", minDelay) != null) {
                 screen.click("face6.png");
-            } else if (screen.exists("play_button.png", minDelay) != null){
+            } else if (screen.exists("play_button.png", minDelay) != null) {
                 screen.click("play_button.png");
             }
             log.info("Clicked on video player play button");
 
             Screen screen3 = new Screen();
-            screen3.setAutoWaitTimeout(delay);
+            screen3.setAutoWaitTimeout(secondsDelay);
             ImagePath.add(imagePath);
             screen3.wait("maximize_button.png");
-            videoTime = getVideoTime(element);
             screen3.click("maximize_button.png");
+            videoTime = getVideoTime(videoIndex);
             log.info("Clicked on video player maximize button");
 
 
@@ -233,13 +257,14 @@ public class MyAccountPage extends BasePage {
         try {
 
             Robot robot = new Robot();
-            robot.mouseMove(0, 25);
+
+            robot.mouseMove(mouseX, mouseY);
 
         } catch (AWTException e) {
             e.printStackTrace();
         }
 
-        log.info("Moved mouse cursor to x:0 y:25");
+        log.info("Moved mouse cursor to x:" + mouseX + " y:" + mouseY);
 
         log.info("Video playback is started");
 
@@ -409,44 +434,51 @@ public class MyAccountPage extends BasePage {
     public String getLessonTitle() {
         String lessonTitle = findElement(lectureTitle).getText();
 
-        System.out.println("Found next recording name " + lessonTitle);
+        System.out.println("Found next recording name: " + lessonTitle);
         return lessonTitle;
     }
 
-    public void startMultipleVideosPlaybackAndRecordingThenStopAndSave(String courseTitle, String courseURL, String lessonTitle, String lessonURL, String numberOfVideosOnPage) {
+    public void startMultipleVideosPlaybackAndRecordingThenStopAndSave(String courseTitle, String courseURL, String lessonTitle, String lessonURL, String numberOfVideosOnPage, int startingVideoIndex) {
         long delay = 3000L;
 
         List<WebElement> videoFrames = findAllVideosRegions(videoFrameLocator);
 
         log.info("Found " + videoFrames.size() + " videos on the page");
 
-        String topicTitleString = "";
+        String topicTitleString;
 
-        for (int i = 0; i < Integer.parseInt(numberOfVideosOnPage); i++) {
+        /*---------|   |---------------------------------------------------------------------------*/
+        for (int i = startingVideoIndex; i < Integer.parseInt(numberOfVideosOnPage); i++) {
+            /*---------|   |-------------------------------------------------------------------------*/
 
 
             // HARD hardcode in the loop!!!!
 
 
+            log.info("Processing video with index: " + i);
 
-            log.info("Processing video number " + i);
-
-            makeWebElementVisibleInViewport(videoFrames.get(i));
+            // makeWebElementVisibleInViewport(videoFrames.get(i));
 
             WebElement element;
-            if (findElements(topicTitle).size() > 0 ) {
+            if (findElements(topicTitle).size() > 0) {
                 element = findElements(topicTitle).get(i);
             } else {
                 element = findElements(lectureTitle).get(i);
             }
             topicTitleString = element.getText();
             topicTitleString = topicTitleString.replace(':', '_');
-            log.info("Found next topic title " + topicTitleString);
+            log.info("Found next topic title: " + topicTitleString);
 
             //startNewVideoRecording();
 
             startNewVideoRecordingCamtasia();
-            String videoTime = startVideoPlayback(videoFrames.get(i));
+
+            setFocusOnCourseWindow();
+
+            // scrolling to specific video as sidebar is hidden now
+            scrollToVideoWithDownArrow(i);
+
+            String videoTime = startVideoPlayback(i);
             //stopVideoRecordingWhenVideoEnds();
 
 
@@ -458,6 +490,36 @@ public class MyAccountPage extends BasePage {
             //renameVideoFileTo(videoTitle);
 
         }
+    }
+
+    private void scrollToVideoWithDownArrow(int currentVideoIndex) {
+        int numberOfArrowDownsToScrollVideoFrame = 15;
+        long delayBetweenScrolling = 100L;
+
+        Screen screen = new Screen();
+        screen.mouseMove(0,300);
+        log.info("Moved cursor to y:300");
+
+        screen.mouseDown(Button.LEFT);
+        screen.mouseUp(Button.LEFT);
+        log.info("Clicking at specified point with Sikuli");
+
+//        for (int i = 1; i < currentVideoIndex; i++) {
+//            for (int j = 0; i < numberOfArrowDownsToScrollVideoFrame; i++) {
+//                try {
+//                    Thread.sleep(delayBetweenScrolling);
+//                    screen.type(Key.DOWN);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                log.info("Scrolling down with Down Arrow key");
+//            }
+//        }
+
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("window.scrollBy(0,700)");
+
+
     }
 
     @Step("Start new Camtasia screen recording")

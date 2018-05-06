@@ -98,6 +98,7 @@ public class ConvertTheVideosTest {
 
             //screen.wait("camtasia_reveal_in_finder_button.png", FOREVER);
 
+            screen.wait("camtasia_close_button.png");
             screen.click("camtasia_close_button.png");
             screen.wait("camtasia_close_window.png");
             screen.click("camtasia_close_window.png");

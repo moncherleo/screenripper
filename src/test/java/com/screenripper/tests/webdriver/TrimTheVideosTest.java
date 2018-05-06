@@ -24,7 +24,7 @@ public class TrimTheVideosTest {
     String ffprobePath = "/usr/local/bin/ffprobe";
 
     double movieTailSizeInSeconds = 7;
-    double movieExtractionStartInSeconds = 30;
+    double movieExtractionStartInSeconds = 33;
 
 
     @Test

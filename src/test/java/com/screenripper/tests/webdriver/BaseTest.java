@@ -44,22 +44,41 @@ public class BaseTest {
 
         @Override
         protected void failed(Throwable e, Description description) {
-            makeScreenshotOnFailure("Screenshot on failure");
+            try{
+                makeScreenshotOnFailure("Screenshot on failure");
+                logout();
+            } catch (Exception ex){
+                ex.printStackTrace();
+            } finally {
+                quitDriver();
+            }
         }
 
         @Override
         protected void finished(Description description) {
+            logout();
+            quitDriver();
+        }
 
-            if (driver != null) {
-
-                new MyAccountPage(driver).logoutFromAccount();
-                driver.quit();
-
-                log.info("The browser is closed");
-            }
-
+        @Override
+        protected void skipped (org.junit.AssumptionViolatedException e, Description description){
+            quitDriver();
         }
     };
+
+    public void logout(){
+        if (driver != null) {
+            new MyAccountPage(driver).logoutFromAccount();
+        }
+    }
+
+    public void quitDriver(){
+        if (driver != null) {
+            driver.quit();
+            log.info("The browser is closed");
+        }
+    }
+
 
     @Attachment(value = "{0}", type = "image/png")
     public byte[] makeScreenshotOnFailure(String attachName) {

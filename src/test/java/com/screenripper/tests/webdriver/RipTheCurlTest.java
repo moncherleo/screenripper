@@ -6,9 +6,11 @@ import junitparams.FileParameters;
 import junitparams.JUnitParamsRunner;
 import junitparams.mappers.CsvWithHeaderMapper;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.LoggerFactory;
 import ru.yandex.qatools.allure.annotations.Parameter;
 
 import java.io.*;
@@ -18,11 +20,15 @@ import static com.screenripper.tests.webdriver.Config.*;
 
 @RunWith(JUnitParamsRunner.class)
 public class RipTheCurlTest extends BaseTest {
+    org.slf4j.Logger log = LoggerFactory.getLogger(RipTheCurlTest.class);
+
+
+    int startingVideoIndex = 1; //first element index is 0
 
     //mvn test -Dtest=RipTheCurlTest
 
-    LoginPage loginPage = new LoginPage(driver);
-    MyAccountPage myAccountPage = new MyAccountPage(driver);
+    LoginPage loginPage;
+    MyAccountPage myAccountPage;
 
     @Parameter("Course title")
     String ct;
@@ -36,28 +42,6 @@ public class RipTheCurlTest extends BaseTest {
     @Parameter("Lesson URL")
     String lURL;
 
-    @Before
-    public void beforeTest() {
-        loginPage = new LoginPage(driver);
-        myAccountPage = new MyAccountPage(driver);
-
-//        myAccountPage.startNewVideoRecording();
-//
-//        try {
-//            Thread.sleep(10000000);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-
-        loginPage.navigateToLoginPage(loginPageURL).
-                closeAutomationChromeAlert().
-                loginAs(username, password);
-    }
-
-    @After
-    public void afterTest() {
-    }
-
     @Test
     @FileParameters(value = csvFilename, mapper = CsvWithHeaderMapper.class)
     public void recordTheVideoTest(String courseTitle, String courseURL, String lessonTitle, String lessonURL, String numberOfVideosOnPage) {
@@ -68,20 +52,34 @@ public class RipTheCurlTest extends BaseTest {
 //        String lessonTitle = "Часть №1";
 //        String lessonURL = "https://my.stratoplan.net/lesson/career-architect-s01/";
 
+        // linking CSV values to Allure parameters
         ct = courseTitle;
         lt = lessonTitle;
         cURL = courseURL;
         lURL = lessonURL;
 
-        myAccountPage.navigateToThePageByURL(lessonURL);
-        myAccountPage.startMultipleVideosPlaybackAndRecordingThenStopAndSave(courseTitle, courseURL, lessonTitle, lessonURL, numberOfVideosOnPage);
-        addVideoAsProcessed(courseTitle
-                .concat("|")
-                .concat(courseURL)
-                .concat("|")
-                .concat(lessonTitle)
-                .concat("|")
-                .concat(lessonURL));
+        // verify if there any unprocessed videos on the page
+        if (Integer.parseInt(numberOfVideosOnPage) > startingVideoIndex) {
+
+            new LoginPage(driver).navigateToLoginPage(loginPageURL).
+                    closeAutomationChromeAlert().
+                    loginAs(username, password);
+
+            new MyAccountPage(driver).navigateToThePageByURL(lessonURL).
+            startMultipleVideosPlaybackAndRecordingThenStopAndSave(courseTitle, courseURL, lessonTitle, lessonURL, numberOfVideosOnPage, startingVideoIndex);
+            addVideoAsProcessed(courseTitle
+                    .concat("|")
+                    .concat(courseURL)
+                    .concat("|")
+                    .concat(lessonTitle)
+                    .concat("|")
+                    .concat(lessonURL));
+        } else {
+            Assert.fail("Screen ripper is failed due to request video index "
+                    + (startingVideoIndex + 1)
+                    + " is greated that current video index "
+                    + numberOfVideosOnPage + ".");
+        }
     }
 
     public void addVideoAsProcessed (String processedVideoString) {
